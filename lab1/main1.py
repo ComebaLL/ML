@@ -14,8 +14,9 @@ import pandas as pd
 # 200 обхектов, 4 признака, noise - стандартное отклонение добавляемого шума,
 # random_state - кол-во различных итерация
 # n_infomative - кол-во признаков влияющих на целевую переменную
-# X - кол-во признаков
+# X - признак
 # Y - целевая переменная
+# n_featuer - кол-во признаков 
 
 X, Y = make_regression(200, n_features= 4, n_informative= 2, noise= 30, random_state=826456)
 
@@ -28,10 +29,10 @@ df = df.round(4)
 df.to_csv('reg_data.csv', index=False)
 
 
-data = pd.DataFrame({'X1': X[:,0], 'y' :Y})
+#data = pd.DataFrame({'X1': X[:,0], 'y' :Y})
 plt.figure( figsize=(5,3))
 plt.title("Диаграмма рассеивания")
-seaborn.scatterplot( data = data, x = "X1", y = "y")
+seaborn.scatterplot( data = df, x = "X1", y = "y")
 plt.show()
 
 print (X.shape)
@@ -39,9 +40,9 @@ print (X.shape)
 lin_reg = LinearRegression()    # модель линейной регресии
 lin_reg.fit(X,Y)                # обучение модели
 
-print( f"b1 {lin_reg.coef_}")            # коэффициент линейной регресии: b1
+print( f"b1 {lin_reg.coef_}")            # коэффициент линейной регресии: b1 для x1,x2,x3,4
 
-print( f"b0 {lin_reg.intercept_}")       # коэффициент линейной регресии: b0
+print( f"b0 {lin_reg.intercept_}")       # коэффициент линейной регресии: b0 свободный член
 
 
 y_pred = lin_reg.predict(X)     # предсказание
