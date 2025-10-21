@@ -1,0 +1,13 @@
+[project]
+name = "linregweb"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "dotenv>=0.9.9",
+    "gradio>=5.49.1",
+    "matplotlib>=3.10.7",
+    "scikit-learn>=1.7.2",
+    "seaborn>=0.13.2",
+]
