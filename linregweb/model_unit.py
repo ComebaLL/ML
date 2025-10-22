@@ -3,12 +3,8 @@ __author__ = "Kuvykin Nikita"
 
 import pandas as pd
 import numpy as np
-from module_download import load_model
-import numpy as np
 import pandas as pd
 import seaborn as sns
-import io
-import base64
 import matplotlib.pyplot as plt
 
 
@@ -44,7 +40,7 @@ def get_r2_score(model):
         X_data = data[['x1', 'x2', 'x3', 'x4']]
         y_data = data['y']
         
-        # Вычисляем R² score
+        # Вычисляем R2 score
         r2 = model.score(X_data, y_data)
         return f"{r2:.4f}"
     
@@ -89,7 +85,7 @@ def get_top_features(model):
 
 def create_prediction_data(x1, x2, x3, x4):
     """
-    Создает DataFrame для предсказания с правильными именами признаков
+    Создает DataFrame для предсказания
     """
     return pd.DataFrame({
         'x1': [x1],
@@ -100,37 +96,45 @@ def create_prediction_data(x1, x2, x3, x4):
 
 
 def create_scatter_plots(model, x1, x2, x3, x4):
+    """
+    Создание диаграмм рассеяния для топ-2 важных признаков
+    """
     data = load_training_data()
     if data is None or model is None:
         return None
     
-    # Получаем наиболее важные признаки
+    # Получаем наиболее важные признаки (топ-2)
     top_features_idx = get_top_features(model)
     feature_names = ['x1', 'x2', 'x3', 'x4']
     top_features = [feature_names[i] for i in top_features_idx]
     
-    # Входные данные пользователя (используем правильный формат)
-    input_data = create_prediction_data(x1, x2, x3, x4)
-    prediction = model.predict(input_data)[0]
+    # Входные данные пользователя
+    user_input = np.array([x1, x2, x3, x4])
+    prediction = model.predict([user_input])[0]
     
-    # Создаем графики
+    # Создаем графики - 1 строка, 2 столбца
     fig, axes = plt.subplots(1, 2, figsize=(15, 6))
-    fig.suptitle('Диаграммы рассеяния: Важнейшие признаки vs Целевая переменная', fontsize=14)
+    fig.suptitle('Диаграммы рассеяния: Важнейшие признаки vs Целевая переменная')
     
     for idx, (ax, feature_idx, feature_name) in enumerate(zip(axes, top_features_idx, top_features)):
+        # Создаем DataFrame для текущего признака
+        plot_data = pd.DataFrame({
+            'x': data[feature_name], 
+            'y': data['y']
+        })
+        
         # Отображение точек обучающей выборки
-        sns.scatterplot(data=pd.DataFrame({'x': data[feature_name], 'y': data['y']}),
-                       x='x', y='y', alpha=0.5, label='Обучающие данные', ax=ax)
+        sns.scatterplot(data=plot_data, x='x', y='y', 
+                       alpha=0.5, label='Обучающие данные', ax=ax)
         
         # Добавление линии регрессии
-        sns.regplot(data=pd.DataFrame({'x': data[feature_name], 'y': data['y']}),
-                   x='x', y='y', scatter=False, color='blue', 
+        sns.regplot(data=plot_data, x='x', y='y', 
+                   scatter=False, color='blue', 
                    line_kws={'label': 'Линия регрессии'}, ax=ax)
         
         # Отображение точки введенных пользователем данных
-        user_feature_value = input_data[feature_name].iloc[0]
-        ax.scatter(user_feature_value, prediction, 
-                  color='red', s=100, label='Ваши данные', edgecolors='black', linewidth=2)
+        ax.scatter(user_input[feature_idx], prediction, 
+                  color='red', s=100, label='Ваши данные', edgecolors='black')
         
         ax.set_xlabel(f'Признак {feature_name}')
         ax.set_ylabel('Целевая переменная (y)')
@@ -138,15 +142,7 @@ def create_scatter_plots(model, x1, x2, x3, x4):
         ax.grid(True, alpha=0.3)
     
     plt.tight_layout()
-    
-    # Конвертируем график в base64
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png', dpi=100, bbox_inches='tight')
-    buf.seek(0)
-    img_str = base64.b64encode(buf.read()).decode()
-    plt.close(fig)
-    
-    return f"data:image/png;base64,{img_str}"
+    return plt
 
 
 def predict(model, x1, x2, x3, x4):
@@ -164,11 +160,11 @@ def predict(model, x1, x2, x3, x4):
         prediction = model.predict(input_data)
         
         # Создаем графики
-        plot_image = create_scatter_plots(model, x1, x2, x3, x4)
+        plot_obj = create_scatter_plots(model, x1, x2, x3, x4)
         
         # Возвращаем результат
         result_text = f"Предсказанное значение: {prediction[0]:.5f}"
-        return result_text, plot_image
+        return result_text, plot_obj
     
     except Exception as e:
         return f"Ошибка предсказания: {e}", None

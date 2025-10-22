@@ -2,7 +2,7 @@ __author__ = "Kuvykin Nikita"
 
 import gradio as gr
 from module_download import load_model
-from model_unit import load_training_data, get_r2_score, get_model_formula, get_top_features, create_scatter_plots, predict
+from model_unit import get_r2_score, get_model_formula, predict
 
 
 
@@ -25,7 +25,7 @@ regression_ui = gr.Interface(
     ],
     outputs=[
         gr.Textbox(label="Результат"),
-        #gr.Image(label="Диаграмма рассеяния", height=400)
+        gr.Plot(label="Диаграмма рассеяния")
     ],
     title="Предсказание линейной регрессии",
     description=f"""
