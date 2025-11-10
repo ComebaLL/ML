@@ -60,7 +60,7 @@ def get_model_coefficients(model):
     coefficients = model.coef_
     intercept = model.intercept_
     
-    # [intercept, coef1, coef2, coef3, coef4]
+    # numpy array: [intercept, coef1, coef2, coef3, coef4]
     coef_array = np.concatenate([[intercept], coefficients])
     
     return coef_array
@@ -164,38 +164,3 @@ def predict(model, x1, x2, x3, x4):
     
     except Exception as e:
         return f"Ошибка предсказания: {e}", None
-    
-
-def coefficients_for_formul(coef_array):
-    """
-    Преобразует массив коэффициентов в красивую LaTeX формулу
-    """
-    if coef_array is None or len(coef_array) != 5:
-        return "y = \\beta_0 + \\beta_1 x_1 + \\beta_2 x_2 + \\beta_3 x_3 + \\beta_4 x_4"
-    
-    intercept = coef_array[0]
-    coefficients = coef_array[1:]
-    
-    # Создаем уравнение LaTeX
-    equation_parts = []
-    
-    # Свободный член
-    if abs(intercept) > 0.001: 
-        equation_parts.append(f"{intercept:.4f}")
-    
-    # Коэффициенты с переменными
-    for i, coef in enumerate(coefficients):
-        if abs(coef) > 0.001: 
-            sign = " + " if coef >= 0 else " - "
-            abs_coef = abs(coef)
-            equation_parts.append(f"{sign}{abs_coef:.4f} x_{{{i+1}}}")
-    
-    # Собираем уравнение
-    if equation_parts:
-        if equation_parts[0].startswith(' + '):
-            equation_parts[0] = equation_parts[0][3:]
-        equation = "y = " + "".join(equation_parts)
-    else:
-        equation = "y = 0"
-    
-    return equation

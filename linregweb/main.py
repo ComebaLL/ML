@@ -2,17 +2,25 @@ __author__ = "Kuvykin Nikita"
 
 import gradio as gr
 from module_download import load_model
-from model_unit import get_r2_score, get_model_formula, predict
-
+from model_unit import get_r2_score, get_model_coefficients, predict, coefficients_for_formul
 
 
 # Загружаем модель
 try:
     model = load_model()
-    print("Модель успешно загружена!")
+    print("Модель загружена")
 except Exception as e:
     print(f"Ошибка загрузки модели: {e}")
     model = None
+
+
+r2_score_value = get_r2_score(model)
+# Получаем коэффициенты как numpy array
+coef_array = get_model_coefficients(model)
+
+# Генерируем LaTeX формулу из коэффициентов
+latex_formula = coefficients_for_formul(coef_array)
+
 
 # Создаем основной интерфейс
 regression_ui = gr.Interface(
@@ -31,8 +39,8 @@ regression_ui = gr.Interface(
     description=f"""
     Введите значения 4 независимых переменных для получения предсказания.
     
-    **Модель:** {get_model_formula(model)} \n
-    **R2 Score:** {get_r2_score(model)}
+    **Формула:** $${latex_formula}$$ \n
+    **R2 Score:** {r2_score_value}
     
     """
 )
