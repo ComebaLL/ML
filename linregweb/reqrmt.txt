@@ -1,0 +1,6 @@
+dotenv==0.9.9
+gradio==5.49.1
+matplotlib==3.10.7
+pytest==8.4.2
+scikit-learn==1.6.1
+seaborn==0.13.2

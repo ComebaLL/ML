@@ -41,3 +41,18 @@ http//127.0.0.1:8000/metrics
 ```
 http//127.0.0.1:8000/docs
 ```
+
+
+для докера
+
+для создани
+```bash
+docker build -t imang_name .
+```
+
+для запуска
+
+```bash
+docker run -p 8000:8000 image_name
+```
+

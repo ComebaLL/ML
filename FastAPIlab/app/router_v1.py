@@ -2,6 +2,7 @@ __author__ = "Kuvykin Nikita"
 
 
 
+import fastapi
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import JSONResponse
 import json
@@ -9,13 +10,11 @@ import os
 import uvicorn
 import sys
 from pathlib import Path
+from app.model_unit import predict
+from app.module_download import load_model
 
 project_root = Path(__file__).parent.parent.parent
 sys.path.append(str(project_root))
-
-from module_download import load_model
-from model_unit import predict
-
 
 try:
     model = load_model()
@@ -24,15 +23,13 @@ except Exception as e:
     print(f"Модель не загружена: {str(e)}")
     model = None
 
-app = FastAPI(
-    title= "Линейная регрессия"
-)
+router_v1 = fastapi.APIRouter(prefix="/api/v1", tags=["v1"])
 
-@app.get("/ping")
+@router_v1.get("/ping")
 async def pong():
     return {"status": "ok"}
 
-@app.get("/predict")
+@router_v1.get("/predict")
 async def get_predict_model(x1: float, x2: float, x3: float, x4: float):
     """
     Энпоинт для получения  предсказания модели
@@ -44,7 +41,7 @@ async def get_predict_model(x1: float, x2: float, x3: float, x4: float):
     try:
         result_text, _ = predict(model, x1, x2, x3, x4) # получаем предсказание
 
-        predict_value = float(result_text.split(":")[1].strip())
+        predict_value = float(result_text)
 
         return{
             "prediction": predict_value,
@@ -56,7 +53,7 @@ async def get_predict_model(x1: float, x2: float, x3: float, x4: float):
         raise HTTPException(status_code=500, detail=f"Ошибка предсказания: {str(e)}")
     
 
-@app.get("/metrics")
+@router_v1.get("/metrics")
 async def get_metrics():
     """
     Эндпоинт для получения данных модели
@@ -81,8 +78,3 @@ async def get_metrics():
         raise HTTPException(status_code=500, detail="Файле не найден")
     except Exception as e:
         raise HTTPException(status_code=501, detail=f"Ошибка чтения файла: {str(e)}")
-    
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)
-

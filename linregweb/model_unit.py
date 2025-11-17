@@ -138,7 +138,7 @@ def create_scatter_plots(model, x1, x2, x3, x4):
         ax.grid(True, alpha=0.3)
     
     plt.tight_layout()
-    return plt
+    return fig
 
 
 def predict(model, x1, x2, x3, x4):
@@ -157,10 +157,11 @@ def predict(model, x1, x2, x3, x4):
         
         # Создаем графики
         plot_obj = create_scatter_plots(model, x1, x2, x3, x4)
+        plot_obj2 = create_violin_plots(model, x1, x2, x3, x4)
         
         # Возвращаем результат
         result_text = f"{prediction[0]:.5f}"
-        return result_text, plot_obj
+        return result_text, plot_obj,plot_obj2
     
     except Exception as e:
         return f"Ошибка предсказания: {e}", None
@@ -199,3 +200,70 @@ def coefficients_for_formul(coef_array):
         equation = "y = 0"
     
     return equation
+
+
+def create_violin_plots(model, x1, x2, x3, x4):
+    """
+    Создание скрипичных диаграмм для топ-2 важных признаков
+    """
+    data = load_training_data()
+    if data is None or model is None:
+        return None
+    
+    # Получаем наиболее важные признаки (топ-2)
+    top_features_idx = get_top_features(model)
+    feature_names = ['x1', 'x2', 'x3', 'x4']
+    top_features = [feature_names[i] for i in top_features_idx]
+    
+    # Входные данные пользователя
+    user_input = np.array([x1, x2, x3, x4])
+    prediction = model.predict([user_input])[0]
+    
+    # Создаем графики - 1 строка, 2 столбца
+    fig, axes = plt.subplots(1, 2, figsize=(15, 6))
+    fig.suptitle('Скрипичные диаграммы: Распределение важнейших признаков')
+    
+    for idx, (ax, feature_idx, feature_name) in enumerate(zip(axes, top_features_idx, top_features)):
+        # Создаем данные для скрипичной диаграммы
+        feature_data = data[feature_name]
+        user_value = user_input[feature_idx]
+        
+        # Создаем скрипичную диаграмму
+        violin_parts = ax.violinplot(feature_data, positions=[0], 
+                                   showmeans=True, showmedians=True)
+        
+        # Настраиваем внешний вид скрипичной диаграммы
+        violin_parts['bodies'][0].set_facecolor('lightblue')
+        violin_parts['bodies'][0].set_alpha(0.7)
+        violin_parts['cmins'].set_color('darkblue')
+        violin_parts['cmaxes'].set_color('darkblue')
+        violin_parts['cbars'].set_color('darkblue')
+        violin_parts['cmeans'].set_color('red')
+        violin_parts['cmedians'].set_color('green')
+        
+        # Добавляем точку пользовательских данных
+        ax.scatter(0, user_value, color='red', s=100, 
+                  label='Ваше значение', edgecolors='black', zorder=3)
+        
+        # Добавляем аннотацию для пользовательского значения
+        ax.annotate(f'Ваше значение: {user_value:.2f}', 
+                   xy=(0, user_value), xytext=(10, 10),
+                   textcoords='offset points', ha='left', va='bottom',
+                   bbox=dict(boxstyle='round,pad=0.5', fc='yellow', alpha=0.7),
+                   arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0'))
+        
+        # Настройка осей и легенды
+        ax.set_ylabel(f'Значение признака {feature_name}')
+        ax.set_xlabel('Распределение признака')
+        ax.set_xticks([0])
+        ax.set_xticklabels([f'Признак {feature_name}'])
+        ax.legend()
+        ax.grid(True, alpha=0.3)
+        
+        # Добавляем статистическую информацию
+        stats_text = f'Медиана: {feature_data.median():.2f}\nСреднее: {feature_data.mean():.2f}\nСтд: {feature_data.std():.2f}'
+        ax.text(0.02, 0.98, stats_text, transform=ax.transAxes, 
+               verticalalignment='top', bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+    
+    plt.tight_layout()
+    return plt

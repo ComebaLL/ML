@@ -33,7 +33,8 @@ regression_ui = gr.Interface(
     ],
     outputs=[
         gr.Textbox(label="Результат"),
-        gr.Plot(label="Диаграмма рассеяния")
+        gr.Plot(label="Диаграмма рассеяния"),
+        gr.Plot(label="Скрипичная диаграмма")
     ],
     title="Предсказание линейной регрессии",
     description=f"""
