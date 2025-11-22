@@ -56,3 +56,5 @@ docker build -t imang_name .
 docker run -p 8000:8000 image_name
 ```
 ///
+
+uv run pytest ваш_файл.py -v

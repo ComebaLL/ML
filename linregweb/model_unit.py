@@ -229,8 +229,12 @@ def create_violin_plots(model, x1, x2, x3, x4):
         user_value = user_input[feature_idx]
         
         # Создаем скрипичную диаграмму
+        # showmeans - отображение среднего арифметического
+        # showmedians - включает отображение медианы
+        # showmextrema - по умолчанию true показывает усы
         violin_parts = ax.violinplot(feature_data, positions=[0], 
-                                   showmeans=True, showmedians=True)
+                                   showmeans=True, showmedians=True,
+                                   quantiles=[0.25,0.5,0.75])
         
         # Настраиваем внешний вид скрипичной диаграммы
         violin_parts['bodies'][0].set_facecolor('lightblue')
