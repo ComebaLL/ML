@@ -1,17 +1,13 @@
-FROM python:3.12
+FROM python:3.10-slim
 
 # Установка рабочей директории в контейнере
 WORKDIR /app
 
 # Копирование файла зависимостей в контейнер
-COPY reqrmt.txt .
+COPY . /app
 
 # Установка зависимостей
 RUN pip install --no-cache-dir -r reqrmt.txt
-
-# Копирование приложения и модели в контейнер
-COPY app/ ./app/
-COPY model/ ./model/
 
 # Порт для FastAPI приложения
 EXPOSE 8000
