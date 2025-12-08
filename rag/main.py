@@ -56,8 +56,7 @@ print("Создание векторной базы (Embeddings)...")
 # Инициализируем модель для создания эмбеддингов
 embeddings_model = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
-# Создаем векторную базу данных FAISS из ЗАГРУЖЕННЫХ ДОКУМЕНТОВ
-# Обрати внимание: используем from_documents вместо from_texts
+# Создаем векторную базу данных FAISS из гагруженных документов
 vector_store = FAISS.from_documents(documents, embeddings_model)
 
 # Создаем объект "ретривера"
@@ -100,7 +99,7 @@ qa = RetrievalQA.from_chain_type(
 )
 
 # --- Пример запроса ---
-query = "What`s skill use only sword?" 
+query = "Tell me something about Immortal Call?" 
 
 print(f"\nВопрос: {query}")
 print("-" * 30)

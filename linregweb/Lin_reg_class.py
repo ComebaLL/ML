@@ -23,7 +23,8 @@ class LinnRegressModel:
             'MSE' : [],
             'MAE' : []
         }
-    
+        # todo
+        self._text = description    
 
     def load_model(self) -> None:
         """
