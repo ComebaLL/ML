@@ -1,80 +1,92 @@
 __author__ = "Kuvykin Nikita"
 
-
-
-import fastapi
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import JSONResponse
-import json
 import os
-import uvicorn
-import sys
-from pathlib import Path
-from app.model_unit import predict
-from app.module_download import load_model
+import json
+from fastapi import APIRouter, HTTPException
+from typing import Dict, Any, List
+from app.model_unit import RegressionService
 
-project_root = Path(__file__).parent.parent.parent
-sys.path.append(str(project_root))
-
-try:
-    model = load_model()
-    print("Модель загружена")
-except Exception as e:
-    print(f"Модель не загружена: {str(e)}")
-    model = None
-
-router_v1 = fastapi.APIRouter(prefix="/api/v1", tags=["v1"])
-
-@router_v1.get("/ping")
-async def pong():
-    return {"status": "ok"}
-
-@router_v1.get("/predict")
-async def get_predict_model(x1: float, x2: float, x3: float, x4: float):
+# Вспомогательный класс для метрик 
+class MetricsService:
     """
-    Энпоинт для получения  предсказания модели
+    Отвечает исключительно за получение данных о метриках.
     """
+    def __init__(self, json_path: str):
+        self._json_path = json_path
 
-    if model is None:
-        raise HTTPException(status_code=500, detail="Модель не загружена")
-    
-    try:
-        result_text, _ = predict(model, x1, x2, x3, x4) # получаем предсказание
-
-        predict_value = float(result_text)
-
-        return{
-            "prediction": predict_value,
-            "features": {
-                "x1": x1, "x2": x2, "x3": x3, "x4": x4,
-            }
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Ошибка предсказания: {str(e)}")
-    
-
-@router_v1.get("/metrics")
-async def get_metrics():
-    """
-    Эндпоинт для получения данных модели
-    """
-
-    try:
-
-        # путь к json файлу
-        json_path = os.path.join(os.path.dirname(__file__), "..", "model", "model_onfo.json") 
-        json_path = os.path.abspath(json_path)
-
-        if not os.path.exists(json_path):
-            print("фалй не найден")
-        else:
-            with open(json_path, "r", encoding='utf-8') as f:
-                metrics_data = json.load(f)
-            print("метрики загружены")
+    def get_metrics(self) -> Dict[str, Any]:
+        """Читает метрики из JSON файла."""
+        if not os.path.exists(self._json_path):
+            raise FileNotFoundError(f"Файл метрик не найден: {self._json_path}")
         
-        return JSONResponse(content=metrics_data)
-    
-    except Exception as e:
-        raise HTTPException(status_code=500, detail="Файле не найден")
-    except Exception as e:
-        raise HTTPException(status_code=501, detail=f"Ошибка чтения файла: {str(e)}")
+        try:
+            with open(self._json_path, "r", encoding='utf-8') as f:
+                return json.load(f)
+        except json.JSONDecodeError:
+            raise ValueError("Ошибка формата JSON в файле метрик")
+        except Exception as e:
+            raise RuntimeError(f"Неизвестная ошибка чтения метрик: {e}")
+
+
+# Класс Роутера V1 
+class InferenceRouterV1:
+    """
+    Класс, объединяющий все эндпоинты API версии 1.
+    """
+    def __init__(self, model_service: RegressionService, metrics_service: MetricsService):
+        self._model_service = model_service
+        self._metrics_service = metrics_service
+        
+        # Инициализируем FastAPI router
+        self.router = APIRouter(prefix="/api/v1", tags=["v1"])
+        
+        # Регистрируем маршруты
+        self._register_routes()
+
+    def _register_routes(self):
+        """Привязываем методы класса к путям URL."""
+        self.router.add_api_route("/ping", self.pong, methods=["GET"])
+        self.router.add_api_route("/predict", self.predict_handler, methods=["GET"])
+        self.router.add_api_route("/metrics", self.metrics_handler, methods=["GET"])
+
+    async def pong(self):
+        """Проверка работоспособности."""
+        return {"status": "ok"}
+
+    async def predict_handler(self, x1: float, x2: float, x3: float, x4: float):
+        """
+        Эндпоинт для получения предсказания.
+        """
+        # Проверка на то, инициализирован ли сервис
+        if not self._model_service:
+             raise HTTPException(status_code=503, detail="Service Unavailable: Model not loaded")
+
+        try:
+            features = [x1, x2, x3, x4]
+            result_text, _, _, _ = self._model_service.process_prediction(features)
+            
+            predict_value = float(result_text)
+
+            return {
+                "prediction": predict_value,
+                "features": {
+                    "x1": x1, "x2": x2, "x3": x3, "x4": x4,
+                }
+            }
+        except Exception as e:
+            # Важно возвращать 500 только при реальных крашах
+            raise HTTPException(status_code=500, detail=f"Internal Calculation Error: {str(e)}")
+
+    async def metrics_handler(self):
+        """
+        Эндпоинт для получения данных модели.
+        """
+        try:
+            data = self._metrics_service.get_metrics()
+            return data
+        except FileNotFoundError:
+            raise HTTPException(status_code=404, detail="Metrics file not found on server")
+        except ValueError:
+            raise HTTPException(status_code=500, detail="Metrics file is corrupted")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error retrieving metrics: {str(e)}")

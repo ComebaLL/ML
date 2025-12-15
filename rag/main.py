@@ -34,8 +34,8 @@ try:
 
     text_splitter = CharacterTextSplitter(
         separator="\n\n",
-        chunk_size=1000,  
-        chunk_overlap=0   
+        chunk_size=1000,                    # 1000 символов 
+        chunk_overlap=0                     # позваляет не обрывать контекст, чтобы не было потеряно слово
     )
     
     documents = text_splitter.split_documents(raw_documents)
@@ -86,15 +86,15 @@ prompt = ChatPromptTemplate.from_messages([
 ])
 
 # Объект для QA
-# Используем стандартный RetrievalQA (обрати внимание на импорты, langchain_classic может быть устаревшим)
+# Используем стандартный RetrievalQA 
 qa = RetrievalQA.from_chain_type(
-    llm=llm,
-    chain_type="stuff",
-    retriever=retriever,
-    return_source_documents=True,
+    llm=llm,                                    # языковая модель
+    chain_type="stuff",                         # способ извлечения документов, объеденяет все документы в один конекст
+    retriever=retriever,                        # компонент для поиска данных в векторной базе
+    return_source_documents=True,               # возвращяет ответ и исходные данные
     chain_type_kwargs={
-        "prompt": prompt,
-        "document_variable_name": "context",
+        "prompt": prompt,                       # щаблон промта
+        "document_variable_name": "context",    # куда будут подставленные извлеченные данные
     },
 )
 
